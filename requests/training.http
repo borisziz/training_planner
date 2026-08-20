@@ -1,0 +1,30 @@
+@baseUrl = http://localhost:8080
+
+### Создание тестовой тренировки
+POST {{baseUrl}}/training/create
+Content-Type: application/json
+Accept: application/json
+
+{
+  "user_id": 1,
+  "training": {
+    "date": "2026-08-19T18:30:00+03:00",
+    "comment": "Тестовая интервальная тренировка",
+    "items": [
+      {
+        "template_id": 1,
+        "params": {
+          "cross_template_params": {
+            "speed": "4:30/km",
+            "duration": 1200,
+            "max_pulse": 170
+          }
+        }
+      }
+    ],
+    "result": "Тренировка выполнена",
+    "result_files": [
+      "https://example.com/training-video.mp4"
+    ]
+  }
+}

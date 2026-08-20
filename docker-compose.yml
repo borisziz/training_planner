@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations/postgres:/migrations:ro
+      - ./docker/postgres/init-migrations.sh:/docker-entrypoint-initdb.d/10-migrations.sh:ro
+    mem_limit: 1024m
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -h localhost -p 5432 || exit 1' ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-training_planner}
+      POSTGRES_USER: ${POSTGRES_USER:-training_planner}
+      POSTGRES_DB: ${POSTGRES_DB:-training_planner}
+
+  service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-training_planner}:${POSTGRES_PASSWORD:-training_planner}@postgres:5432/${POSTGRES_DB:-training_planner}?sslmode=disable
+      PORT: "8080"
+    ports:
+      - "${SERVICE_PORT:-8080}:8080"
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --quiet
+        - --tries=1
+        - --spider
+        - http://127.0.0.1:8080/health
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
